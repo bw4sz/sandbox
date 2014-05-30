@@ -14,14 +14,7 @@ Here i took 10 abstract for each member of the Stony Brook Faculty and performed
 
 ```r
 
-opts_chunk$set(, warnings = FALSE, messages = FALSE, dpi = 400)
-```
-
-```
-## Error: argument is missing, with no default
-```
-
-```r
+opts_chunk$set(warnings = FALSE, messages = FALSE, dpi = 100)
 # Script to take in vector of names to create word clouds and network of
 # abstract word interactions ie to show how the department is connected
 
@@ -420,3 +413,31 @@ mem[order(mem$value, decreasing = TRUE), ][1:20, ]
 ```
 
 
+Trying different layouts
+===
+
+
+```r
+plot.igraph(g, layout = layout.lgl, edge.color = as.character(colsRB$colramp), 
+    edge.width = (E(g)$weight/50))
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-61.png) 
+
+```r
+
+layout <- layout.reingold.tilford(g, circular = T)
+
+plot.igraph(g, layout = layout, edge.color = as.character(colsRB$colramp), edge.width = (E(g)$weight/50))
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-62.png) 
+
+```r
+
+
+plot.igraph(g, layout = layout.auto, edge.color = as.character(colsRB$colramp), 
+    edge.width = (E(g)$weight/50))
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-63.png) 
