@@ -3,7 +3,7 @@ Visualizing interaction networks: An example using faculty abstracts
 
 I've been playing around with how best to visualize single level networks with pairwise interactions. 
 
-Here i took 10 abstract for each member of the Stony Brook Faculty and performed the following analysis
+Here i took 10 abstract for each member of the Stony Brook faculty and performed the following analysis:
 
 1. Decomposed each abstract into a word cloud
 2. Created a count of each word for each faculty member
@@ -14,7 +14,7 @@ Here i took 10 abstract for each member of the Stony Brook Faculty and performed
 
 ```r
 
-opts_chunk$set(warnings = FALSE, messages = FALSE, dpi = 100)
+opts_chunk$set(warning = FALSE, message = FALSE, dpi = 100)
 # Script to take in vector of names to create word clouds and network of
 # abstract word interactions ie to show how the department is connected
 
@@ -23,75 +23,12 @@ opts_chunk$set(warnings = FALSE, messages = FALSE, dpi = 100)
 library("XML")
 library("stringr")
 library("RCurl")
-```
-
-```
-## Loading required package: bitops
-```
-
-```r
 library("wordcloud")
-```
-
-```
-## Loading required package: Rcpp
-## Loading required package: RColorBrewer
-```
-
-```r
 library("tm")
 require(reshape2)
-```
-
-```
-## Loading required package: reshape2
-```
-
-```r
 require(sna)
-```
-
-```
-## Loading required package: sna
-## sna: Tools for Social Network Analysis
-## Version 2.3-2 created on 2014-01-13.
-## copyright (c) 2005, Carter T. Butts, University of California-Irvine
-##  For citation information, type citation("sna").
-##  Type help(package="sna") to get started.
-```
-
-```r
 require(bipartite)
-```
-
-```
-## Loading required package: bipartite
-## Loading required package: vegan
-## Loading required package: permute
-## Loading required package: lattice
-## This is vegan 2.0-10
-##  This is bipartite 2.04
-##  For latest changes see versionlog in  ?"bipartite-package".
-##  For citation see: citation("bipartite").
-##  Have a nice time plotting and analysing two-mode networks.
-```
-
-```r
 require(igraph)
-```
-
-```
-## Loading required package: igraph
-## 
-## Attaching package: 'igraph'
-## 
-## The following objects are masked from 'package:sna':
-## 
-##     %c%, betweenness, bonpow, closeness, degree, dyad.census,
-##     evcent, hierarchy, is.connected, neighborhood, triad.census
-```
-
-```r
 
 # source functions
 getAbstracts <- function(author, university, dFrom, dTill, nRecs) {
@@ -109,45 +46,29 @@ getAbstracts <- function(author, university, dFrom, dTill, nRecs) {
     # Add the search keyword - author
     aQ <- paste(aL, "[author]", sep = "")
     
-    # add institution?
+    # Add two search queries together
+    hlpQ1 <- aQ
     
     if (exists("university")) {
         aU <- str_replace_all(university, " ", "+")
         # Add the search keyword - affiliation
-        aUU <- paste(aL, "[ad]", sep = "")
+        aUU <- paste(aU, "[ad]", sep = "")
     }
     
-    # Format the publication date and add the search keyword - pdat If only one
-    # year is provided, use that year, otherwise use year_1:year_2
-    dQ <- ""
     
-    if ((str_length(dFrom) > 0) & (str_length(dTill) > 0)) {
-        d1 <- paste(dFrom, dTill, sep = ":")
-        dQ <- paste(d1, "[pdat]", sep = "")
+    if (exists("university")) {
+        hlpQ2 <- paste(hlpQ1, aUU, sep = "&")
     }
-    
-    if ((str_length(dFrom) > 0) & (str_length(dTill) == 0)) 
-        dQ <- paste(dFrom, "[pdat]", sep = "")
-    
-    if ((str_length(dTill) > 0) & (str_length(dFrom) == 0)) 
-        dQ <- paste(dTill, "[pdat]", sep = "")
-    
-    # Add two seqrch queries together
-    hlpQ1 <- aQ
-    
-    if (str_length(dQ) > 0) 
-        hlpQ1 <- paste(aQ, dQ, sep = "+")
     
     # Add the max number of retrieved articles at the end of the query
     rmQ <- paste("&retmax=", nRecs, sep = "")
-    hlpQ2 <- paste(hlpQ1, rmQ, sep = "")
+    hlpQ3 <- paste(hlpQ2, rmQ, sep = "")
     
-    if (exists("university")) {
-        hlpQ3 <- paste(hlpQ2, aUU, sep = "+")
-    }
+    
+    print(paste("Search term", hlpQ3))
     
     # Finalize the query and serch Pubmed
-    searchUrl <- paste(eSearch, hlpQ2, sep = "")
+    searchUrl <- paste(eSearch, hlpQ3, sep = "")
     # Wait - to ensure that all requests will be processed
     Sys.sleep(3)
     hlpURL <- getURL(searchUrl)
@@ -216,8 +137,15 @@ Individual faculty: Catherine Graham
 # Get inputs, download abstracts, and create a corresponding wordcloud
 
 # Run test
-abs <- getAbstracts(author = "Catherine H. Graham", "Stony Brook", 2010, 2014, 
-    10)
+abs <- getAbstracts(author = "Graham Catherine H", university = "Stony Brook", 
+    dFrom = 1970, dTill = 2014, nRecs = 20)
+```
+
+```
+## [1] "Search term Graham+Catherine+H[author]&Stony+Brook[ad]&retmax=20"
+```
+
+```r
 
 # plot the abstracts, the 2nd and third argument are the color brewer
 # ?brewer.pal, number of colors and palette
@@ -235,13 +163,44 @@ All faculty
 
 # Step two make a network of the participants
 
-profs <- c("Heather J. Lynch", "Catherine H. Graham", "Lev R. Ginzburg", "H. Resit Akcakaya", 
-    "Dianna K. Padilla", "John R. True", "Walt F Eanes", "Mike Bell", "Jeffrey Levinton", 
-    "Brenna Henn", "Liliana M. Davalos", "Joshua S. Rest", "Jessica Gurevitch", 
-    "Stephen B. Baines", "Douglas Futuyma")
+profs <- c("Lynch HJ", "Graham CH", "Ginzburg LR", "Akcakaya HR", "Padilla DK", 
+    "John R. True", "Eanes WF", "Bell MA", "Levinton JS", "Henn BM", "Davalos LM", 
+    "Rest JS", " Gurevitch J", "Baines SB", "Futuyma DJ")
 abs_all <- lapply(profs, function(x) {
-    abs <- getAbstracts(x, "Stony Brook", 1990, 2014, 15)
+    abs <- getAbstracts(x, "Stony Brook", 1980, 2014, 20)
 })
+```
+
+```
+## [1] "Search term Lynch+HJ[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Graham+CH[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Ginzburg+LR[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Akcakaya+HR[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Padilla+DK[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term John+R.+True[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Eanes+WF[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Bell+MA[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Levinton+JS[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Henn+BM[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Davalos+LM[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Rest+JS[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term +Gurevitch+J[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Baines+SB[author]&Stony+Brook[ad]&retmax=20"
+## [1] "Search term Futuyma+DJ[author]&Stony+Brook[ad]&retmax=20"
+```
+
+```r
+names(abs_all) <- profs
+
+print("Number of abstracts:")
+```
+
+```
+## [1] "Number of abstracts:"
+```
+
+```r
+abs_prof <- data.frame(profs, Abstracts = sapply(abs_all, length))
 
 # plot all as one word cloud
 plotWC(abs_all, 8, "Accent")
@@ -272,29 +231,14 @@ me <- lapply(abs_all, function(x) {
     d <- data.frame(word = names(v), freq = v)
 })
 
+# account for richness of abstracts
+
+for (x in 1:length(me)) {
+    me[[x]]$freq <- me[[x]]$freq/abs_prof$Abstracts[[x]]
+}
+
 names(me) <- profs
 mem <- melt(me)
-```
-
-```
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-## Using word as id variables
-```
-
-```r
 
 mem$word <- as.character(mem$word)
 
@@ -320,11 +264,10 @@ V(g)$name
 ```
 
 ```
-##  [1] "Brenna Henn"         "Catherine H. Graham" "Dianna K. Padilla"  
-##  [4] "Douglas Futuyma"     "H. Resit Akcakaya"   "Heather J. Lynch"   
-##  [7] "Jeffrey Levinton"    "Jessica Gurevitch"   "John R. True"       
-## [10] "Joshua S. Rest"      "Lev R. Ginzburg"     "Liliana M. Davalos" 
-## [13] "Mike Bell"           "Stephen B. Baines"   "Walt F Eanes"
+##  [1] " Gurevitch J" "Akcakaya HR"  "Baines SB"    "Bell MA"     
+##  [5] "Davalos LM"   "Eanes WF"     "Futuyma DJ"   "Ginzburg LR" 
+##  [9] "Graham CH"    "Henn BM"      "John R. True" "Levinton JS" 
+## [13] "Lynch HJ"     "Padilla DK"   "Rest JS"
 ```
 
 ```r
@@ -337,7 +280,7 @@ E(g)$size
 
 ```r
 
-plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = "black", edge.width = E(g)$weight/50)
+plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = "black", edge.width = E(g)$weight/4)
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-51.png) 
@@ -347,7 +290,7 @@ plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = "black", edge.
 # color by weight
 cols <- gray(E(g)$weight/max(E(g)$weight))
 
-plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = cols, edge.width = E(g)$weight/50)
+plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = cols, edge.width = E(g)$weight/4)
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-52.png) 
@@ -372,7 +315,7 @@ colramp.w <- data.frame(weight.order, colramp)
 colsRB <- colramp.w[order(colramp.w$X1.length.orig.), ]
 
 plot.igraph(g, layout = layout.fruchterman.reingold, edge.color = as.character(colsRB$colramp), 
-    edge.width = (E(g)$weight/50))
+    edge.width = (E(g)$weight/4))
 ```
 
 ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-53.png) 
@@ -389,27 +332,27 @@ mem[order(mem$value, decreasing = TRUE), ][1:20, ]
 ```
 
 ```
-##               word variable value                  L1
-## 5202   populations     freq    64         Brenna Henn
-## 693        species     freq    57 Catherine H. Graham
-## 1794       species     freq    55   H. Resit Akcakaya
-## 5203       african     freq    38         Brenna Henn
-## 1795        change     freq    32   H. Resit Akcakaya
-## 694   phylogenetic     freq    31 Catherine H. Graham
-## 1796       climate     freq    31   H. Resit Akcakaya
-## 695           data     freq    30 Catherine H. Graham
-## 5204       genetic     freq    27         Brenna Henn
-## 5205          data     freq    26         Brenna Henn
-## 5206         human     freq    24         Brenna Henn
-## 5207    population     freq    23         Brenna Henn
-## 696       patterns     freq    22 Catherine H. Graham
-## 1797        models     freq    22   H. Resit Akcakaya
-## 6177          data     freq    22  Liliana M. Davalos
-## 6178     evolution     freq    22  Liliana M. Davalos
-## 697      diversity     freq    21 Catherine H. Graham
-## 3128   populations     freq    21        John R. True
-## 5208        africa     freq    21         Brenna Henn
-## 6179 morphological     freq    21  Liliana M. Davalos
+##               word variable value           L1
+## 2434       species     freq 4.158  Akcakaya HR
+## 7604   populations     freq 4.105      Henn BM
+## 7605       african     freq 2.263      Henn BM
+## 2435        models     freq 2.105  Akcakaya HR
+## 2436        change     freq 2.053  Akcakaya HR
+## 3528       species     freq 2.000   Padilla DK
+## 2437    population     freq 1.947  Akcakaya HR
+## 7606    population     freq 1.947      Henn BM
+## 2438       climate     freq 1.895  Akcakaya HR
+## 12148        cells     freq 1.889    Baines SB
+## 11080       artery     freq 1.882  Gurevitch J
+## 11081     patients     freq 1.765  Gurevitch J
+## 7607       genetic     freq 1.737      Henn BM
+## 6995    resistance     freq 1.667  Levinton JS
+## 7608          data     freq 1.632      Henn BM
+## 7609         human     freq 1.632      Henn BM
+## 12674        plant     freq 1.625   Futuyma DJ
+## 3529    plasticity     freq 1.600   Padilla DK
+## 1     survivorship     freq 1.583     Lynch HJ
+## 5131      activity     freq 1.550     Eanes WF
 ```
 
 
@@ -419,7 +362,7 @@ Trying different layouts
 
 ```r
 plot.igraph(g, layout = layout.lgl, edge.color = as.character(colsRB$colramp), 
-    edge.width = (E(g)$weight/50))
+    edge.width = (E(g)$weight/4))
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-61.png) 
@@ -428,7 +371,7 @@ plot.igraph(g, layout = layout.lgl, edge.color = as.character(colsRB$colramp),
 
 layout <- layout.reingold.tilford(g, circular = T)
 
-plot.igraph(g, layout = layout, edge.color = as.character(colsRB$colramp), edge.width = (E(g)$weight/50))
+plot.igraph(g, layout = layout, edge.color = as.character(colsRB$colramp), edge.width = (E(g)$weight/4))
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-62.png) 
@@ -437,7 +380,7 @@ plot.igraph(g, layout = layout, edge.color = as.character(colsRB$colramp), edge.
 
 
 plot.igraph(g, layout = layout.auto, edge.color = as.character(colsRB$colramp), 
-    edge.width = (E(g)$weight/50))
+    edge.width = (E(g)$weight/4))
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-63.png) 
