@@ -14,7 +14,7 @@ Here i took 10 abstract for each member of the Stony Brook Faculty and performed
 
 ```r
 
-opts_chunk$set(, warnings = FALSE, messages = FALSE, dpi = 200)
+opts_chunk$set(, warnings = FALSE, messages = FALSE, dpi = 400)
 ```
 
 ```

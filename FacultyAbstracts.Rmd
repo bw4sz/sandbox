@@ -13,7 +13,7 @@ Here i took 10 abstract for each member of the Stony Brook Faculty and performed
 
 ```{r,dpi=100}
 
-opts_chunk$set(,warnings=FALSE,messages=FALSE,dpi=200)
+opts_chunk$set(,warnings=FALSE,messages=FALSE,dpi=400)
 #Script to take in vector of names to create word clouds and network of abstract word interactions
 #ie to show how the department is connected
 
