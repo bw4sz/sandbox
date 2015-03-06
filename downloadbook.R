@@ -15,15 +15,19 @@ str(tables)
 string<-as.character(tables[[1]][1,"V2"])
 
 #get everythhing after url
+r<-str_extract_all(string,"(http:.*?})")[[1]]
 
 #oops looks like we have a trailing brace
 r<-sapply(r,function(x){
 gsub(x,pattern="}",replacement="")
 })
 
-#download and name
+#only get the pdfs
+r<-r[str_detect(r,".pdf")]
 
-for(book in 1:length(r)){
+#download and name
+for(x in 1:length(r)){
+  book<-r[x]
 #get filename
 filnam<-str_match(book,"(\\w+).pdf")[,1]
 
