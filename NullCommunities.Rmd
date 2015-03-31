@@ -150,15 +150,15 @@ finaldat$Comparison<-paste(finaldat$To,finaldat$From,sep=" ")
 
 View the observed versus the upper and low 95th quantile against the observed value (in red)
 
-```{r,fig.width=9}
+```{r,fig.width=11}
 #plot the null distribution
-p<-ggplot(data=finaldat,aes(x=Comparison)) + geom_errorbar(aes(ymin=lower,ymax=Upper)) + theme_bw() + facet_wrap(~To,scales="free",nrow=1)
+p<-ggplot(data=finaldat,aes(x=From)) + geom_errorbar(aes(ymin=lower,ymax=Upper)) + theme_bw() + facet_wrap(~To,scales="free",nrow=1)
 
 #plot the observed values
 p + geom_point(col="red",aes(y=ObservedBeta),size=3) + labs(x="Assemblage Comparison",y="Phylogenetic Betadiversity")
 ```
 
-The red dots are the observed values. The interpretation is that red dots outside the null distribution have greater (below the bars) or less (above the bars) phylogenetic betadiversity than expected given the richness of the assemblage comparison.
+The red dots are the observed values. The interpretation is that red dots outside the null distribution have greater (below the bars) or less (above the bars) phylogenetic betadiversity than expected given the richness of the assemblage comparison. Each panel is an assemblage. By definition the assemblage to itself (for each x=3 on panel 3) has a phylogenetic betadiversity of 0. As expected, pretty much all of these combinations are random, since i randomly drew from the phylogeny to create my observed data.
 
 This kind of model can be extended to account for taxonomic betadiversity, traits, and anything you feel like spending the time to simulate.
 
