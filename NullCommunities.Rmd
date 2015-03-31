@@ -1,0 +1,165 @@
+---
+title: "Simulating null communities with respect to richness"
+author: "Ben Weinstein"
+date: "Monday, March 30, 2015"
+output: html_document
+---
+
+Say you have a phylogeny like the one in the picante package.
+
+```{r,fig.width=10,warning=FALSE,message=FALSE}
+#Load packages
+library(picante)
+library(ape)
+library(ggplot2)
+library(dplyr)
+library(reshape2)
+```
+
+The picante package has some fun fake data to play with
+
+```{r, echo=FALSE}
+#load data
+data(phylocom)
+
+tree<-phylocom$phylo
+
+#plot tree
+plot(tree)
+```
+
+Lets make five observed assemblages
+```{r}
+#Richness is drawn from a poisson (lambda=8)
+r<-rpois(5,8)
+
+#sample observed species from the phylogeny without replacement
+samp<-function(x){ sample(size=x,tree$tip.label,replace=F)}
+pres<-lapply(r,samp)
+```
+
+Tidy up the dataframe to format the way required by picante. Columns as species, rows as sites.
+```{r}
+m<-melt(pres)
+siteXspp<-acast(m,L1~value,fill=0,fun.aggregate=length)
+```
+
+So now we have a site by species matrix. This is normally what you would get from the field data.
+
+#Calculate Phylogenetic Betadiversity
+
+```{r}
+observed<-as.matrix(phylosor(siteXspp,tree))
+```
+
+Now let's make a bunch of random communities with the sample richness. This is trivial in this example, since i made the observed communities too, but in the real case it helps to illustrate.
+
+The goal is to make assemblages of assemblage combination. So in our example we have assemblages of
+```{r}
+#get the richness of each assemblage
+r<-apply(siteXspp,1,sum)
+r
+```
+
+So all combinations would be
+
+```{r}
+combs<-expand.grid(unique(r),unique(r))
+colnames(combs)<-c("To","From")
+```
+
+Now we need to make a function that simulates an assemblage equal to the size of the To community and compares it a simulated assemblage equal to the size of the From community. If you have many types of assemblages, you you want to cut this in half, since comparing an assemblage of 6 species to an assemblage of 9 species is the same as comparing an assemblage of 9 species to an assemblage of 6 species. The order makes no difference, so you don't need to do both. I'll ignore that for this quick example.
+
+```{r}
+sampleBoth<-function(x,y){
+  #simulate assemblage one
+  a<-sample(size=x,tree$tip.label,replace=F)
+  
+  #Simualte assemblage two
+  b<-sample(size=y,tree$tip.label,replace=F)
+  
+  #bind together
+  m<-melt(list(A=a,B=b))
+  siteXspp<-acast(m,L1~value,fill=0,fun.aggregate=length)
+  
+  #calculate betadiversity
+  return(data.frame(To=x,From=y,Beta=as.numeric(phylosor(siteXspp,tree))))
+}
+```
+
+Apply our new function to each row of the combinations of richness assemblages. However, we want do it hundreds of times to get a null distribution.
+
+```{r}
+#make 100 replicates
+replicates<-100
+out<-matrix(nrow=nrow(combs)*replicates,ncol=3)
+colnames(out)<-c("To","From","Beta")
+
+#loop through each row 100 times
+#sorry for the slightly ugly indexing, just going quickly
+
+for(row in 1:nrow(combs)){
+  for (times in 1:replicates){
+  Betavalue<-sampleBoth(x=combs[row,"To"],y=combs[row,"From"])
+  out[(row-1)*replicates+times,]<-as.numeric(Betavalue)
+    }  
+  }
+
+out<-as.data.frame(out)
+head(out)
+```
+
+View the observed and null distributions
+
+Make a column with the null combination of richness as an identifier.
+
+```{r}
+out$combo<-paste(out$To,out$From,sep="_")
+ggplot(out,aes(x=Beta,fill=combo)) + geom_histogram() + facet_wrap(~combo) + theme_bw() + ggtitle("Null Phylogenetic Betadiversity for Richness") + labs(col="Richness Combination",x="Phylogenetic Betadiversity")
+```
+
+Calculate lower and upper quantiles. If we use a $\alpha=0.05$ we can put 2.5% in each tail.
+
+
+```{r}
+quants<-group_by(out,combo) %>% summarize(Mean=mean(Beta),Upper=quantile(Beta,0.975),lower=quantile(Beta,0.025))
+```
+
+Compare the quantiles to the observed value. The logic is, if the observed value it outside the null distribution it is considered unlikely to occur due to richness alone.
+
+```{r}
+#format the observed data.
+mobs<-melt(observed)
+colnames(mobs)<-c("To","From","ObservedBeta")
+
+#make richness identifier
+rich<-data.frame(Site=rownames(siteXspp),Richness=apply(siteXspp,1,sum))
+
+mobs$ToRichness<-rich[mobs$To,"Richness"]
+mobs$FromRichness<-rich[mobs$From,"Richness"]
+
+#make identifer
+mobs$combo<-paste(mobs$ToRichness,mobs$FromRichness,sep="_")
+
+#merge to null quantiles
+finaldat<-merge(quants,mobs,by="combo")
+
+#Last step, create combination of assemblages, not richnesses
+finaldat$Comparison<-paste(finaldat$To,finaldat$From,sep=" ")
+```
+
+View the observed versus the upper and low 95th quantile against the observed value (in red)
+
+```{r}
+#plot the null distribution
+p<-ggplot(data=finaldat,aes(x=Comparison)) + geom_errorbar(aes(ymin=lower,ymax=Upper)) + theme_bw() + facet_wrap(~To,scales="free",nrow=1)
+
+#plot the observed values
+p + geom_point(col="red",aes(y=ObservedBeta),size=3) + labs(x="Assemblage Comparison",y="Phylogenetic Betadiversity")
+```
+
+The red dots are the observed values. The interpretation is that red dots outside the null distribution have greater (below the bars) or less (above the bars) phylogenetic betadiversity than expected given the richness of the assemblage comparison.
+
+This kind of model can be extended to account for taxonomic betadiversity, traits, and anything you feel like spending the time to simulate.
+
+Check out the pez library for more fun tools.
