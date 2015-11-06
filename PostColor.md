@@ -87,7 +87,7 @@ So the function takes in a vector of point estimates and a c("colors") and shoul
 
 
 ```r
-d<-rnorm(1000,10)
+d<-rnorm(10000,10)
 toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x=1,y=data,col=col)) + geom_point(size=3) + scale_color_identity()
 ```
@@ -105,6 +105,51 @@ ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line(size=2) + scale_color_ide
 
 ![](PostColor_files/figure-html/unnamed-chunk-11-1.png) 
 
+I think it looks best with three or four colors, but its not entirely clear the accuracy of this approach and the importance of the bins
+
+```r
+d<-rnorm(10000,10)
+toplot<-data.frame(data=d,col=plotit(d,c("black","blue","yellow","red")))
+ggplot(toplot,aes(x=1,y=data,col=col)) + geom_line(size=3) + scale_color_identity() + theme_bw()
+```
+
+![](PostColor_files/figure-html/unnamed-chunk-12-1.png) 
+
+Using with alpha?
+
+```r
+plotit<-function(dat,colors){
+a<-density(dat)
+d<-data.frame(x=a$x,dens=a$y)
+rd<-d[order(d$dens),]
+rd$cols<-colorRampPalette(colors,alpha=T)(nrow(rd))
+quant<-round(ecdf(rd$x)(dat)*nrow(rd))
+ord<-rd[order(rd$x),]
+cols<-ord$cols[quant]
+return(cols)  
+}
+```
+Looks like you need to specify group if you turn alpha on.
+
+```r
+d<-rnorm(10000,10)
+toplot<-data.frame(data=d,col=plotit(d,c("blue","yellow","red")))
+ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line(size=4,aes(group=1)) + scale_color_identity() + theme_bw()
+```
+
+![](PostColor_files/figure-html/unnamed-chunk-14-1.png) 
+
+Back to two colors, with alpha.
+
+```r
+d<-rnorm(100000,10,100)
+toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
+ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line(size=4,aes(group=1)) + scale_color_identity() + theme_bw()
+```
+
+![](PostColor_files/figure-html/unnamed-chunk-15-1.png) 
+
+
 Other distributions, not so hot, any ideas why?
 Points look fine.
 
@@ -114,7 +159,7 @@ toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_point(size=3) + scale_color_identity()
 ```
 
-![](PostColor_files/figure-html/unnamed-chunk-12-1.png) 
+![](PostColor_files/figure-html/unnamed-chunk-16-1.png) 
 
 Line segments don't really work with discontinious distributions
 
@@ -124,4 +169,4 @@ toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line() + scale_color_identity()
 ```
 
-![](PostColor_files/figure-html/unnamed-chunk-13-1.png) 
+![](PostColor_files/figure-html/unnamed-chunk-17-1.png) 
