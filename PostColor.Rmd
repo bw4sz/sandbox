@@ -2,7 +2,9 @@
 title: "PostPlot"
 author: "Ben Weinstein"
 date: "November 5, 2015"
-output: html_document
+output: 
+  html_document:
+    keep_md: True
 ---
 
 #Question from Heather.
