@@ -26,7 +26,7 @@ Sort by density
 rd<-d[order(d$dens),]
 ```
 
-Create a color ramp from white to black with 1000 breaks
+Create a color ramp from blue to red with 1000 breaks
 
 ```r
 rd$cols<-colorRampPalette(c("blue","red"))(nrow(rd))
@@ -71,11 +71,11 @@ Wrap that into a function
 
 
 ```r
-plotit<-function(dat){
+plotit<-function(dat,colors){
 a<-density(dat)
 d<-data.frame(x=a$x,dens=a$y)
 rd<-d[order(d$dens),]
-rd$cols<-colorRampPalette(c("blue","red"))(nrow(rd))
+rd$cols<-colorRampPalette(colors)(nrow(rd))
 quant<-round(ecdf(rd$x)(dat)*nrow(rd))
 ord<-rd[order(rd$x),]
 cols<-ord$cols[quant]
@@ -83,12 +83,12 @@ return(cols)
 }
 ```
 
-So the function should return colors for any density estimate
+So the function takes in a vector of point estimates and a c("colors") and should return colors for any density estimate
 
 
 ```r
 d<-rnorm(1000,10)
-toplot<-data.frame(data=d,col=plotit(d))
+toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x=1,y=data,col=col)) + geom_point(size=3) + scale_color_identity()
 ```
 
@@ -99,7 +99,7 @@ Okay that looks great. but we want line segments, not points.
 
 ```r
 d<-rnorm(1000,10)
-toplot<-data.frame(data=d,col=plotit(d))
+toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line(size=2) + scale_color_identity()
 ```
 
@@ -110,7 +110,7 @@ Points look fine.
 
 ```r
 d<-rpois(1000,10)
-toplot<-data.frame(data=d,col=plotit(d))
+toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_point(size=3) + scale_color_identity()
 ```
 
@@ -120,7 +120,7 @@ Line segments don't really work with discontinious distributions
 
 ```r
 d<-rpois(1000,10)
-toplot<-data.frame(data=d,col=plotit(d))
+toplot<-data.frame(data=d,col=plotit(d,c("blue","red")))
 ggplot(toplot,aes(x="Par",y=data,col=col)) + geom_line() + scale_color_identity()
 ```
 
